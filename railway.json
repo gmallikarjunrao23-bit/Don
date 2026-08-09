@@ -7,6 +7,6 @@
     "numReplicas": 1,
     "restartPolicyType": "ON_FAILURE",
     "healthcheckPath": "/",
-    "startCommand": "gunicorn run:app --bind 0.0.0.0:$PORT --workers 2 --threads 4"
+    "startCommand": "gunicorn run:app --bind 0.0.0.0:8080 --workers 2 --threads 4"
   }
 }
