@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Admin — Users{% endblock %}
+
+{% block page_title %}User Management{% endblock %}
+
+{% block content %}
+<div class="content-card">
+    <div class="card-header">
+        <h3>👥 All Users ({{ users|length }})</h3>
+        <a href="{{ url_for('admin.dashboard') }}" class="action-link">← Back</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Name</th>
+                    <th>Tier</th>
+                    <th>Searches</th>
+                    <th>Joined</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td style="font-size:12px;">{{ u.user_id[:20] }}..</td>
+                    <td>{{ u.full_name or 'N/A' }}</td>
+                    <td>
+                        <span class="status-badge" style="background:{{ tiers[u.tier].color }}20;color:{{ tiers[u.tier].color }};">
+                            {{ tiers[u.tier].badge }} {{ u.tier.capitalize() }}
+                        </span>
+                    </td>
+                    <td>{{ u.total_searches }}</td>
+                    <td style="font-size:12px;color:rgba(255,255,255,0.2);">{{ u.created_at.strftime('%Y-%m-%d') if u.created_at else 'N/A' }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin.upgrade_user', user_id=u.id) }}" style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">
+                            <select name="tier" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:6px;color:#fff;padding:4px 8px;font-size:11px;font-family:'Inter',sans-serif;">
+                                {% for key, t in tiers.items() %}
+                                <option value="{{ key }}" {% if u.tier == key %}selected{% endif %}>{{ key.capitalize() }}</option>
+                                {% endfor %}
+                            </select>
+                            <button class="btn" style="padding:4px 12px;font-size:11px;">Update</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
