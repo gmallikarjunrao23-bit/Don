@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Admin — OSINT 100X{% endblock %}
+
+{% block page_title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Users</div>
+        <div class="stat-value">{{ stats.users }}</div>
+        <div class="stat-sub">Total registered</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Premium</div>
+        <div class="stat-value">{{ stats.premium }}</div>
+        <div class="stat-sub">Paid users</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Pending</div>
+        <div class="stat-value">{{ stats.pending }}</div>
+        <div class="stat-sub">Payments to review</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Revenue</div>
+        <div class="stat-value">₹{{ stats.revenue }}</div>
+        <div class="stat-sub">Total collected</div>
+    </div>
+</div>
+
+<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px;">
+    <a href="{{ url_for('admin.users') }}" class="btn btn-outline">👥 Manage Users</a>
+    <a href="{{ url_for('admin.payments') }}" class="btn btn-outline">💳 Payments</a>
+</div>
+
+<div class="content-card">
+    <div class="card-header">
+        <h3>📋 Recent Payments</h3>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Plan</th>
+                    <th>Amount</th>
+                    <th>Txn ID</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in payments %}
+                <tr>
+                    <td>{{ p.user.full_name if p.user else 'N/A' }}</td>
+                    <td>{{ p.tier.capitalize() }}</td>
+                    <td>₹{{ p.amount }}</td>
+                    <td><code style="font-size:11px;">{{ p.transaction_id[:12] }}..</code></td>
+                    <td><span class="status-badge {{ p.status }}">{{ p.status }}</span></td>
+                    <td>
+                        {% if p.status == 'pending' %}
+                        <form method="POST" action="{{ url_for('admin.approve_payment', payment_id=p.id) }}" style="display:inline;">
+                            <button class="btn btn-approve">✅ Approve</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('admin.reject_payment', payment_id=p.id) }}" style="display:inline;">
+                            <input type="hidden" name="reason" value="Verification failed" />
+                            <button class="btn btn-reject">❌ Reject</button>
+                        </form>
+                        {% else %}
+                        <span style="color:rgba(255,255,255,0.2);font-size:12px;">{{ p.approved_at.strftime('%Y-%m-%d') if p.approved_at else '—' }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align:center;color:rgba(255,255,255,0.1);padding:20px;">No payments</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+.btn-approve{background:rgba(16,185,129,0.12);color:#10b981;padding:4px 12px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:all .2s}
+.btn-approve:hover{background:rgba(16,185,129,0.2)}
+.btn-reject{background:rgba(239,68,68,0.12);color:#ef4444;padding:4px 12px;border-radius:6px;border:none;cursor:pointer;font-size:12px;font-weight:600;transition:all .2s}
+.btn-reject:hover{background:rgba(239,68,68,0.2)}
+</style>
+{% endblock %}
