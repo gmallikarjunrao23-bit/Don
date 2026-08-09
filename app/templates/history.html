@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}History — OSINT 100X{% endblock %}
+
+{% block page_title %}Search History{% endblock %}
+
+{% block content %}
+<div class="content-card">
+    <div class="card-header">
+        <h3>📋 All Searches</h3>
+        <div>
+            <span style="font-size:13px;color:rgba(255,255,255,0.2);">{{ history|length }} entries</span>
+            <button class="btn btn-outline" style="padding:4px 16px;font-size:12px;margin-left:12px;" onclick="clearHistory()">
+                <i class="fas fa-trash"></i> Clear
+            </button>
+        </div>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Query</th>
+                    <th>Type</th>
+                    <th>Records</th>
+                    <th>Response</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for h in history %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>
+                        <code style="background:rgba(255,255,255,0.03);padding:2px 8px;border-radius:4px;font-size:12px;">
+                            {{ h.query }}
+                        </code>
+                    </td>
+                    <td>{{ h.type }}</td>
+                    <td>
+                        {% if h.records > 0 %}
+                        <span class="status-badge found">{{ h.records }}</span>
+                        {% else %}
+                        <span class="status-badge empty">0</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ h.response_time }}ms</td>
+                    <td style="color:rgba(255,255,255,0.2);font-size:12px;">{{ h.timestamp }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align:center;color:rgba(255,255,255,0.1);padding:30px;">
+                        No searches yet. Start searching!
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function clearHistory() {
+    if (!confirm('Clear all search history?')) return;
+    fetch('/api/clear_history', { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+            if (d.success) {
+                location.reload();
+            }
+        });
+}
+</script>
+{% endblock %}
