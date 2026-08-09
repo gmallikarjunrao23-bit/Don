@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}Profile — OSINT 100X{% endblock %}
+
+{% block page_title %}Profile{% endblock %}
+
+{% block content %}
+<div style="max-width:500px;margin:0 auto;">
+    <div class="content-card">
+        <!-- Avatar -->
+        <div style="text-align:center;padding:10px 0 20px;">
+            <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#06b6d4);display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:700;margin:0 auto;color:#fff;">
+                {{ user.name[0].upper() }}
+            </div>
+            <h2 style="margin-top:12px;">{{ user.name }}</h2>
+            <p style="color:rgba(255,255,255,0.3);">{{ user.email }}</p>
+        </div>
+
+        <!-- Details -->
+        <div class="profile-row">
+            <span class="label">Plan</span>
+            <span class="value" style="color:#a78bfa;">
+                {{ user.tier.capitalize() }}
+                {% if user.tier == 'free' %}
+                <span style="font-size:11px;color:rgba(255,255,255,0.2);"> (3 searches/day)</span>
+                {% endif %}
+            </span>
+        </div>
+        <div class="profile-row">
+            <span class="label">Joined</span>
+            <span class="value">{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else 'Today' }}</span>
+        </div>
+        <div class="profile-row">
+            <span class="label">Total Searches</span>
+            <span class="value">{{ total_searches }}</span>
+        </div>
+        <div class="profile-row">
+            <span class="label">Today's Searches</span>
+            <span class="value">{{ today_searches }}</span>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid" style="margin-top:16px;grid-template-columns:1fr 1fr;">
+            <div class="stat-box">
+                <div class="num">{{ total_searches }}</div>
+                <div class="lbl">Total Searches</div>
+            </div>
+            <div class="stat-box">
+                <div class="num">{{ today_searches }}</div>
+                <div class="lbl">Today</div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div style="display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap;">
+            <a href="{{ url_for('main.index') }}" class="btn">← Back</a>
+            <a href="{{ url_for('billing.index') }}" class="btn btn-outline">💳 Billing</a>
+            <a href="{{ url_for('auth.logout') }}" class="btn" style="background:rgba(239,68,68,0.2);color:#ef4444;">Logout</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
