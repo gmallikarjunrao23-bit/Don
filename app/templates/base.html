@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}{{ site_name }}{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<div class="app-container">
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <span class="logo-icon">🔍</span>
+            <span class="logo-text">OSINT <span>100X</span></span>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-label">Main</div>
+            <a href="{{ url_for('main.index') }}" class="{% if request.path == '/' %}active{% endif %}">
+                <i class="fas fa-th-large"></i><span>Dashboard</span>
+            </a>
+            <a href="#" onclick="document.getElementById('searchInput')?.focus(); return false;">
+                <i class="fas fa-search"></i><span>Search</span>
+                <span class="badge">New</span>
+            </a>
+            <a href="{{ url_for('search.history') }}">
+                <i class="fas fa-history"></i><span>History</span>
+            </a>
+            <div class="nav-label" style="margin-top:16px;">Account</div>
+            <a href="{{ url_for('profile.index') }}" class="{% if '/profile' in request.path %}active{% endif %}">
+                <i class="fas fa-user"></i><span>Profile</span>
+            </a>
+            <a href="{{ url_for('billing.index') }}" class="{% if '/billing' in request.path %}active{% endif %}">
+                <i class="fas fa-credit-card"></i><span>Billing</span>
+                {% if user and user.tier != 'free' %}
+                <span class="badge" style="background:rgba(16,185,129,0.15);color:#10b981;">Active</span>
+                {% endif %}
+            </a>
+            {% if user and user.is_admin %}
+            <div class="nav-label" style="margin-top:16px;">Admin</div>
+            <a href="{{ url_for('admin.dashboard') }}" class="{% if '/admin' in request.path %}active{% endif %}">
+                <i class="fas fa-shield-alt"></i><span>Admin Panel</span>
+                <span class="badge" style="background:rgba(239,68,68,0.15);color:#ef4444;">★</span>
+            </a>
+            {% endif %}
+            <div class="nav-label" style="margin-top:16px;">Support</div>
+            <a href="#"><i class="fas fa-question-circle"></i><span>Help</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            {% if user %}
+            <div class="user-card">
+                <div class="user-avatar">{{ user.name[0].upper() }}</div>
+                <div class="user-info">
+                    <div class="name">{{ user.name }}</div>
+                    <div class="email">{{ user.email }}</div>
+                </div>
+            </div>
+            <a href="{{ url_for('auth.logout') }}" class="logout-link">
+                <i class="fas fa-sign-out-alt"></i><span>Logout</span>
+            </a>
+            {% else %}
+            <div class="auth-links">
+                <a href="{{ url_for('auth.login') }}">Login</a>
+                <span class="divider">|</span>
+                <a href="{{ url_for('auth.register') }}">Register</a>
+            </div>
+            {% endif %}
+        </div>
+    </aside>
+
+    <!-- ===== MAIN ===== -->
+    <main class="main">
+        <div class="main-header">
+            <h1>{% block page_title %}Dashboard{% endblock %} <span>{% block page_subtitle %}/ Welcome{% if user %}, {{ user.name }}{% endif %}{% endblock %}</span></h1>
+            <div class="actions">
+                <button class="theme-toggle" id="themeToggle" title="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <button class="btn-primary" onclick="document.getElementById('searchInput')?.focus();">
+                    <i class="fas fa-plus"></i> New Search
+                </button>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        <!-- Content -->
+        {% block content %}{% endblock %}
+
+        <!-- Footer -->
+        <div class="footer">
+            Powered by <span class="highlight">{{ developer }}</span> • {{ version }}
+        </div>
+    </main>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+                                                 </html>
