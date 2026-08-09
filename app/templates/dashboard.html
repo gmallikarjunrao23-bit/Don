@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — OSINT 100X{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Quick Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Users</div>
+        <div class="stat-value">{{ stats.users.total }}</div>
+        <div class="stat-sub">{{ stats.users.premium }} premium</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Searches</div>
+        <div class="stat-value">{{ stats.searches.total }}</div>
+        <div class="stat-sub">{{ stats.searches.today }} today</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Revenue</div>
+        <div class="stat-value">₹{{ stats.payments.revenue }}</div>
+        <div class="stat-sub">{{ stats.payments.pending }} pending</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Records Found</div>
+        <div class="stat-value">{{ stats.searches.total_records }}</div>
+        <div class="stat-sub">↑ from all searches</div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="content-card">
+    <div class="card-header">
+        <h3>📋 Recent Activity</h3>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Query</th>
+                    <th>Records</th>
+                    <th>Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in stats.recent_activity[:10] %}
+                <tr>
+                    <td>{{ log.user.full_name if log.user else 'Unknown' }}</td>
+                    <td><code style="background:rgba(255,255,255,0.03);padding:2px 8px;border-radius:4px;font-size:12px;">{{ log.query }}</code></td>
+                    <td><span class="status-badge found">{{ log.result_count }}</span></td>
+                    <td style="color:rgba(255,255,255,0.2);font-size:12px;">{{ log.created_at.strftime('%H:%M:%S') }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align:center;color:rgba(255,255,255,0.1);padding:20px;">No activity yet</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Daily Trends -->
+<div class="content-card">
+    <div class="card-header">
+        <h3>📊 Daily Trends (Last 7 Days)</h3>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;">
+        {% for day in stats.daily_trends %}
+        <div style="text-align:center;background:rgba(255,255,255,0.02);border-radius:10px;padding:12px;">
+            <div style="font-size:20px;font-weight:800;">{{ day.searches }}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.2);">{{ day.date[5:] }}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
