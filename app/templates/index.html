@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}OSINT 100X — Dashboard{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- ===== STATS ===== -->
+<div class="stats-grid" id="statsGrid">
+    <div class="stat-card">
+        <div class="stat-label">Total Searches</div>
+        <div class="stat-value" id="totalSearches">0</div>
+        <div class="stat-sub">↑ 12% from last month</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Records Found</div>
+        <div class="stat-value" id="totalRecords">0</div>
+        <div class="stat-sub">↑ 8% from last month</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">API Calls Today</div>
+        <div class="stat-value" id="apiCalls">0</div>
+        <div class="stat-sub">Remaining: 53</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Plan</div>
+        <div class="stat-value" style="color:#a78bfa;" id="userPlan">Pro</div>
+        <div class="stat-sub">Renews in 12 days</div>
+    </div>
+</div>
+
+<!-- ===== SEARCH ===== -->
+<div class="search-box">
+    <input type="text" id="searchInput" placeholder="Enter phone, email, username, or domain..." autofocus />
+    <button onclick="performSearch()">🔍 SEARCH</button>
+</div>
+
+<div class="hints">
+    <span class="hint" onclick="setQuery('919494850232')">📱 Phone</span>
+    <span class="hint" onclick="setQuery('john@gmail.com')">✉️ Email</span>
+    <span class="hint" onclick="setQuery('@john_doe')">👤 Username</span>
+    <span class="hint" onclick="setQuery('example.com')">🌐 Domain</span>
+    <span class="hint" onclick="setQuery('anything')">🎯 Any</span>
+</div>
+
+<div id="loading" class="loading" style="display:none;">
+    <div class="spinner"></div>
+    <p>⏳ Scanning 500+ databases...</p>
+</div>
+
+<div id="error" class="error" style="display:none;"></div>
+<div id="results"></div>
+
+<!-- ===== RECENT ACTIVITY ===== -->
+<div class="content-card">
+    <div class="card-header">
+        <h3>📋 Recent Searches</h3>
+        <a href="{{ url_for('search.history') }}" class="action-link">View all →</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Query</th>
+                    <th>Type</th>
+                    <th>Records</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody id="historyTable">
+                <tr>
+                    <td colspan="5" style="text-align:center;color:rgba(255,255,255,0.1);padding:20px;">
+                        No searches yet
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ===== BILLING / USAGE ===== -->
+<div class="two-col">
+    <div class="content-card">
+        <div class="card-header">
+            <h3>💳 Current Plan</h3>
+            <a href="{{ url_for('billing.index') }}" class="action-link">Upgrade →</a>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+            <div>
+                <div style="font-size:20px;font-weight:700;color:#a78bfa;" id="planName">Pro</div>
+                <div style="font-size:13px;color:rgba(255,255,255,0.2);" id="planPrice">₹299 / month</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:13px;color:rgba(255,255,255,0.3);">Renews on</div>
+                <div style="font-size:14px;font-weight:600;">Aug 21, 2026</div>
+            </div>
+        </div>
+        <div style="margin-top:12px;background:rgba(255,255,255,0.02);border-radius:10px;padding:12px;">
+            <div style="display:flex;justify-content:space-between;font-size:13px;">
+                <span style="color:rgba(255,255,255,0.3);">Searches used</span>
+                <span><strong id="searchesUsed">0</strong> / 100</span>
+            </div>
+            <div style="width:100%;height:4px;background:rgba(255,255,255,0.04);border-radius:100px;margin-top:6px;">
+                <div id="progressBar" style="width:0%;height:4px;background:linear-gradient(90deg,#7c3aed,#06b6d4);border-radius:100px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-card">
+        <div class="card-header"><h3>📊 Quick Stats</h3></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div style="background:rgba(255,255,255,0.02);border-radius:10px;padding:14px;text-align:center;">
+                <div style="font-size:22px;font-weight:800;" id="quickTotal">0</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.2);">Total API Calls</div>
+            </div>
+            <div style="background:rgba(255,255,255,0.02);border-radius:10px;padding:14px;text-align:center;">
+                <div style="font-size:22px;font-weight:800;" id="quickRecords">0</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.2);">Records Found</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let historyData = [];
+
+function setQuery(v) {
+    document.getElementById('searchInput').value = v;
+    performSearch();
+}
+
+document.getElementById('searchInput').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') performSearch();
+});
+
+function performSearch() {
+    const q = document.getElementById('searchInput').value.trim();
+    if (!q) return;
+
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('results').innerHTML = '';
+    document.getElementById('error').style.display = 'none';
+
+    fetch('/api/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: q })
+    })
+    .then(r => r.json())
+    .then(d => {
+        document.getElementById('loading').style.display = 'none';
+        if (d.error) {
+            document.getElementById('error').innerHTML = '❌ ' + d.error;
+            document.getElementById('error').style.display = 'block';
+            return;
+        }
+        updateStats(d);
+        renderResults(d);
+        historyData.unshift({
+            query: d.query,
+            type: d.type,
+            records: d.total_records || 0,
+            timestamp: d.timestamp || 'Just now'
+        });
+        renderHistory();
+    })
+    .catch(function(e) {
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').innerHTML = '❌ ' + e.message;
+        document.getElementById('error').style.display = 'block';
+    });
+}
+
+function updateStats(d) {
+    document.getElementById('totalSearches').textContent = d.total_sources || 0;
+    document.getElementById('totalRecords').textContent = d.total_records || 0;
+    document.getElementById('apiCalls').textContent = d.response_time ? '1' : '0';
+    document.getElementById('searchesUsed').textContent = d.total_records || 0;
+    document.getElementById('quickTotal').textContent = d.total_sources || 0;
+    document.getElementById('quickRecords').textContent = d.total_records || 0;
+    document.getElementById('userPlan').textContent = d.tier ? d.tier.charAt(0).toUpperCase() + d.tier.slice(1) : 'Free';
+    document.getElementById('planName').textContent = d.tier ? d.tier.charAt(0).toUpperCase() + d.tier.slice(1) : 'Free';
+    const pct = Math.min((d.total_records || 0) / 100 * 100, 100);
+    document.getElementById('progressBar').style.width = pct + '%';
+}
+
+function renderResults(d) {
+    let html = `
+        <div class="result-card">
+            <h3>🎯 Results for <span style="color:#7c3aed;">${esc(d.query)}</span></h3>
+            <div style="font-size:13px;color:rgba(255,255,255,0.2);">
+                Type: ${d.type.toUpperCase()} • ${d.response_time}ms • ${d.timestamp}
+            </div>
+        </div>
+    `;
+
+    if (d.sources && d.sources.length) {
+        d.sources.forEach(function(s) {
+            html += `
+                <div class="result-card">
+                    <h3>${s.platform_emoji || '📢'} ${esc(s.title)}</h3>
+                    ${s.description ? `<div class="desc">${esc(s.description)}</div>` : ''}
+                    ${s.fields.map(f => `
+                        <div class="field">
+                            <span class="lbl">${f.emoji} ${esc(f.label)}</span>
+                            <span class="val">${esc(f.value)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        });
+    } else {
+        html += `
+            <div class="result-card" style="text-align:center;padding:40px;">
+                <span style="font-size:48px;">🛡️</span>
+                <p style="color:rgba(255,255,255,0.2);margin-top:8px;">No records found. Clean result.</p>
+            </div>
+        `;
+    }
+
+    document.getElementById('results').innerHTML = html;
+}
+
+function renderHistory() {
+    const tbody = document.getElementById('historyTable');
+    if (!historyData.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align:center;color:rgba(255,255,255,0.1);padding:20px;">
+                    No searches yet
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    let html = '';
+    historyData.slice(0, 5).forEach(function(h) {
+        const status = h.records > 0
+            ? '<span class="status-badge found">Found</span>'
+            : '<span class="status-badge empty">No Results</span>';
+        html += `
+            <tr>
+                <td><code style="background:rgba(255,255,255,0.03);padding:2px 8px;border-radius:4px;font-size:12px;">${esc(h.query)}</code></td>
+                <td>${esc(h.type)}</td>
+                <td>${h.records}</td>
+                <td>${status}</td>
+                <td style="color:rgba(255,255,255,0.2);font-size:12px;">${esc(h.timestamp)}</td>
+            </tr>
+        `;
+    });
+    tbody.innerHTML = html;
+}
+
+function esc(t) {
+    if (!t) return '';
+    var d = document.createElement('div');
+    d.textContent = t;
+    return d.innerHTML;
+}
+
+// Load history from server
+fetch('/api/history')
+    .then(r => r.json())
+    .then(d => {
+        if (d.history) {
+            historyData = d.history;
+            renderHistory();
+        }
+    })
+    .catch(() => {});
+</script>
+{% endblock %}
