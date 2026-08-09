@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Error — OSINT 100X{% endblock %}
+
+{% block extra_css %}
+<style>
+.error-container{text-align:center;padding:60px 20px}
+.error-code{font-size:80px;font-weight:900;background:linear-gradient(135deg,#7c3aed,#06b6d4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-family:'Orbitron',monospace}
+.error-title{font-size:28px;font-weight:800;margin:12px 0 8px}
+.error-desc{color:rgba(255,255,255,0.3);font-size:16px;max-width:400px;margin:0 auto}
+.error-actions{margin-top:24px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-code">{{ error }}</div>
+    <h1 class="error-title">Something went wrong</h1>
+    <p class="error-desc">{{ description }}</p>
+    <div class="error-actions">
+        <a href="{{ url_for('main.index') }}" class="btn">🏠 Return Home</a>
+        <a href="javascript:history.back()" class="btn btn-outline">← Go Back</a>
+    </div>
+</div>
+{% endblock %}
